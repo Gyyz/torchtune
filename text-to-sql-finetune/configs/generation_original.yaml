@@ -1,0 +1,41 @@
+# Config for running the InferenceRecipe in generate.py to generate output from an LLM
+#
+# To launch, run the following command from root torchtune directory:
+#    tune run generate --config generation
+
+# Model arguments
+model:
+  _component_: torchtune.models.llama3.llama3_8b
+
+checkpointer:
+  _component_: torchtune.utils.FullModelMetaCheckpointer
+  checkpoint_dir: /home/yuze/Workspace/text-to-sql-finetune/downloads/Meta-Llama-3-8B-Instruct/original
+  checkpoint_files: [
+    consolidated.00.pth,
+  ]
+  output_dir: /home/yuze/Workspace/text-to-sql-finetune/outputs/Meta-Llama-3-8B-Instruct/zeroshot/
+  model_type: LLAMA3
+
+device: cuda
+dtype: bf16
+
+seed: 1234
+
+# Tokenizer arguments
+tokenizer:
+  _component_: torchtune.models.llama3.llama3_tokenizer
+  path: /home/yuze/Workspace/text-to-sql-finetune/downloads/Meta-Llama-3-8B/original/tokenizer.model
+
+# Generation arguments; defaults taken from gpt-fast
+file: "/home/yuze/Workspace/text-to-sql-finetune/aigsql/second_round_total.zeroshot.json"
+prompt: "Here is an example, based on \n#the table&column(database schema) information is: {'Devices': ['device_id', 'device_name', 'device_type', 'os', 'webserver', 'user_id', 'office_id', 'model', 'manufacturer', 'last_scanned', 'status', 'added_time', 'last_communication_time', 'os_version', 'snmp_community_string', 'hardware_status', 'firmware_version', 'last_reboot_time', 'last_seen_online_time', 'online_status', 'last_active_timestamp', 'ram_capacity', 'processor_speed', 'free_storage_space', 'location', 'operating_system'], 'Network_Interfaces': ['interface_id', 'device_id', 'interface_name', 'ip_address', 'subnet_mask', 'mac_address', 'default_gateway', 'vlan_tag', 'interface_type', 'bandwidth', 'link_speed', 'ip_address_type', 'mtu', 'dns_server', 'ip_mode', 'vlan_id', 'link_status', 'speed', 'interface_speed', 'status', 'last_activity_time'], 'Firewall_Rules': ['rule_id', 'device_id', 'source_ip', 'destination_ip', 'protocol', 'action', 'destination_port', 'status', 'source_port', 'source_ip_address', 'destination_ip_address', 'rule_action'], 'Scans': ['scan_id', 'scanner_id', 'device_id', 'start_time', 'end_time'], 'Offices': ['office_id', 'city', 'office_name', 'Berlin', 'state', 'country']}. \n# the user question is: Retrieve the names and IP addresses of all network devices that have been scanned in the last 7 days and have at least one open port on port range 5000-6000 and are located in the \"New York\" office.. \n#SQL query: SELECT DISTINCT d.device_name, ni.ip_address FROM Devices d INNER JOIN Network_Interfaces ni ON d.device_id = ni.device_id INNER JOIN Scans s ON d.device_id = s.device_id INNER JOIN Firewall_Rules fr ON ni.ip_address = fr.destination_ip INNER JOIN Offices o ON d.office_id = o.office_id WHERE s.end_time >= date('now', '-7 days') AND fr.destination_port >= 5000 AND fr.destination_port <= 6000 AND fr.action = 'allow' AND o.city = 'New York';\nSo for me question:\nBased on \n# the table&column(database schema) information {'Treatment': ['doctor_id', 'injury_id', 'exercise_id', 'treatment_type', 'treatment_id', 'patient_id', 'medication_id', 'dosage', 'treatment_date', 'duration', 'diagnosis_id', 'illness_id', 'treatment_name', 'recovery_time', 'surgery_type', 'successful', 'end_date', 'start_date', 'cost', 'recovery_date'], 'Medication': ['medication_name', 'medication_id']} and \n# the user question: Find the total number of patients who have been prescribed the medication 'Ibuprofen':,\nGive me the right SQL query for the question. Only SQL query, no explaination. \n# SQL query:"
+instruct_template: null
+chat_format: null
+max_new_tokens: 150
+temperature: 0.6 # 0.8 and 0.6 are popular values to try
+top_k: 300
+zeroone: "zero"
+
+
+
+quantizer: null
